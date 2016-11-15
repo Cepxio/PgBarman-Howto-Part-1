@@ -1,6 +1,6 @@
 # The DBAs Corner presents: PgBarman Tutorial Series
 
-## Part 1: 
+# Part 1: 
 
 #### How to Backup and Restore PostgreSQL Server with Barman via Rsync/SSH - Archive Command
 
