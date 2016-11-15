@@ -11,6 +11,8 @@ The log shipping is the old Postgres method for create a Stanby Server.
 We use this method for _full filesystem backup_, make _incremental backups_ and save WAL archives for _diferential backups_.  
 Then we will use those backups for recover full backups and PITR too, using the 'get-wal' feature.
 
+## Backup
+
 ### Let's Go!
 
 * If you don't have Barman yet installed, follow this _how to_ [Install Barman on CentOS 7](github.com/sarasa)
