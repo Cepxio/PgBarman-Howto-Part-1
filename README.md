@@ -148,3 +148,6 @@ Processing xlog segments from file archival for [Postgres-Server]
 ### Step 8
 
 Somos felices :D
+
+# Restore
+
