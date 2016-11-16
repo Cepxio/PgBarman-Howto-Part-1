@@ -124,7 +124,7 @@ Server [Postgres-Server]:
 Finalmente, hacemos el backup de nuestro Postgres-Server
 
 ```
--bash-4.2$ barman backup [Postgres-Server] 
+barman@[Barman-Server]:~$ barman backup [Postgres-Server] 
 Starting backup using rsync-exclusive method for server [Postgres-Server] in /var/lib/barman/[Postgres-Server]/base/20161109T162030 
 Backup start at xlog location: 0/A000060 (00000001000000000000000A, 00000060) 
 This is the first backup for server [Postgres-Server] 
@@ -149,5 +149,99 @@ Processing xlog segments from file archival for [Postgres-Server]
 
 Somos felices :D
 
-# Restore
+## Restore
 
+### Let's Go!
+
+* You need have installed _barman-cli.noarch_, if you don't have this follow this _how to_ [Install Barman on CentOS 7](github.com/sarasa)
+* You need know the datadir location for the target Postgres-Server.
+* You need know the backup name to recover.
+* The same steps are valid for a normal recover, not PITR.
+
+### Step 1
+
+```
+barman@[Barman-Server]:~$ barman recover [Postgres-Server] 20161114T173219 /var/lib/pgsql/[version]/data --remote-ssh-command "ssh postgres@[Postgres-Server]"
+Starting remote restore for server [Postgres-Server] using backup 20161114T173219
+Destination directory: /var/lib/pgsql/[version]/data
+Doing PITR. Recovery target 
+Copying the base backup.
+Generating recovery.conf
+Identify dangerous settings in destination directory.
+
+IMPORTANT
+These settings have been modified to prevent data losses
+
+postgresql.conf line 206: archive_command = false
+
+WARNING: 'get-wal' is in the specified 'recovery_options'.
+Before you start up the PostgreSQL server, please review the recovery.conf file
+inside the target directory. Make sure that 'restore_command' can be executed by the PostgreSQL user.
+
+Your PostgreSQL server has been successfully prepared for recovery!
+barman@[Barman-Server]:~$ 
+```
+
+*Note:* As you can see, there is a warning messagge, that indicates the 'get-wal' setting up. Also there is a entry "Doing PITR"
+
+### Step 2
+
+In the last step, you can see that Barman took the atributte to change _archive_command_ value to _false_
+This will do an alert in postgres log, so you can change this to default _'cd .'_
+Additionally you can check port and tunning settings.
+
+### Step 3
+
+Check that recovery.conf was generating and it values are like next e.g
+
+```
+# The 'barman-wal-restore' command is provided in the 'barman-cli' package
+restore_command = 'barman-wal-restore -U barman v925uprod.int.cmd.com.ar v1105uprod %f %p'
+```
+
+### Step 4
+
+Now, is time to start postgres.
+Simply hit `service postgresql-9.5 start`
+
+### Step 5
+
+Check if there is nothing wrong in logs
+
+The _pgstartup.log_ must seem like
+
+```
+< 2016-11-15 09:56:17.968 ART >LOG:  redirecting log output to logging collector process
+< 2016-11-15 09:56:17.968 ART >HINT:  Future log output will appear in directory "pg_log".
+```
+
+And postgresql.log like
+
+```
+< 2016-11-15 09:56:17.971 ART >LOG:  database system was interrupted; last known up at 2016-11-14 17:32:19 ART
+< 2016-11-15 09:56:18.126 ART >LOG:  starting archive recovery
+< 2016-11-15 09:56:19.070 ART >LOG:  restored log file "000000010000000000000089" from archive
+< 2016-11-15 09:56:19.314 ART >LOG:  redo starts at 0/89000028
+< 2016-11-15 09:56:19.337 ART >LOG:  consistent recovery state reached at 0/89000168
+< 2016-11-15 09:56:19.338 ART >LOG:  database system is ready to accept read only connections
+< 2016-11-15 09:56:20.381 ART >LOG:  restored log file "00000001000000000000008A" from archive
+< 2016-11-15 09:56:21.826 ART >LOG:  restored log file "00000001000000000000008B" from archive
+< 2016-11-15 09:56:23.299 ART >LOG:  restored log file "00000001000000000000008C" from archive
+< 2016-11-15 09:56:24.777 ART >LOG:  restored log file "00000001000000000000008D" from archive
+< 2016-11-15 09:56:26.257 ART >LOG:  restored log file "00000001000000000000008E" from archive
+< 2016-11-15 09:56:27.729 ART >LOG:  restored log file "00000001000000000000008F" from archive
+ERROR: WAL file '000000010000000000000090' not found in server 'v1105uprod'
+ERROR: Remote 'barman get-wal' command has failed!
+< 2016-11-15 09:56:28.690 ART >LOG:  redo done at 0/8FFFFF50
+< 2016-11-15 09:56:28.690 ART >LOG:  last completed transaction was at log time 2016-11-15 09:32:15.102826-03
+< 2016-11-15 09:56:29.677 ART >LOG:  restored log file "00000001000000000000008F" from archive
+ERROR: WAL file '00000002.history' not found in server 'v1105uprod'
+ERROR: Remote 'barman get-wal' command has failed!
+< 2016-11-15 09:56:30.333 ART >LOG:  selected new timeline ID: 2
+```
+
+### Step 6
+
+Lastest, check access to postgres with psql client and be happy.
+
+Done!
