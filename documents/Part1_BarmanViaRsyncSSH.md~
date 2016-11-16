@@ -1,8 +1,12 @@
-# How to Backup and Restore PostgreSQL Server with Barman via Rsync/SSH - Archive Command
+# The DBAs Corner presents: PgBarman Tutorial Series
 
-## Objetives
+# Part 1: 
 
-This guide attempts to show step by step how to setup backups and recover via log shipping.  
+#### How to Backup and Restore PostgreSQL Server with Barman via Rsync/SSH - Archive Command
+
+### Objetives
+
+This guide attempts to show step by step how to setup backups and restores via log shipping.  
 The log shipping is the old Postgres method for create a Stanby Server.  
 We use this method for _full filesystem backup_, make _incremental backups_ and save WAL archives for _diferential backups_.  
 Then we will use those backups for recover full backups and PITR too, using the 'get-wal' feature.
